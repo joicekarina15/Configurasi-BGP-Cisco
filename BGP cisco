@@ -1,0 +1,25 @@
+
+Pada parameter name kita tentukan nama dari jenis koneksi tersebut (Internasional dan IIX). Kemudian kita arahkan parameter instance ke profile yang telah kita buat sebelumnya yaitu 'default'. Untuk 'Remote Address' adalah gateway dari masing-masing link koneksi, Jangan lupa untuk menentukan 'Remote AS'. Hal ini juga disesuaikan dengan informasi dari ISP. Sebagai contoh kita kali ini kita menggunakan 65530.
+
+Apabila proses 'peering' berhasil maka pada kolom state akan mucul keterangan 'Established' dan jika kita melihat melalui New terminal dengan script /routing bgp peer print, maka pada dua rule yang kita buat tadi terdapat flag 'E'.
+
+
+
+Dan apabila kita lihat pada menu IP ->Routes maka akan muncul banyak sekali rule routing dengan flag 'DAb' (Dynamic Active BGP) yang mana rule tersebut merupakan rule untuk destination dari IIX (lokal) dan juga Internasional.
+
+
+
+Sampai langkah ini IP Public yang ada pada router kita sudah bisa diakses dari luar. Namun, untuk koneksi internetnya sendiri dari router maupun LAN (client) masih belum bisa diakses. Untuk itu kita akan menambahkan rule pada firewall NAT. Namun disini kita tidak akan menggunakan rule NAT dengan "action=masquerade", karena link yang menuju ke internet yaitu ether1 dan ether2 menggunakan IP Private. Sehingga kita akan menggunakan "action=src-nat" dengan menunjuk IP Public yang berada pada salah satu interface router yaitu di ether5.
+
+Pertama, kita tambahkan NAT untuk dua link koneksi ke internet (Internasional dan IIX). Contoh scriptnya adalah sebagai berikut:
+
+/ip firewall nat
+add action=src-nat chain=srcnat out-interface=ether1 src-address=172.16.1.2 to-addresses=202.73.xxx.11
+add action=src-nat chain=srcnat out-interface=ether2 src-address=172.16.4.2 to-addresses=202.73.xxx.11
+
+Kedua, kita tambahkan NAT untuk akses internet dari jaringan LAN. Contoh scriptnya adalah sebagai berikut:
+
+/ip firewall nat
+add action=src-nat chain=srcnat src-address=192.168.88.0/24 to-addresses=202.73.xxx.11
+
+Dari langkah ini seharusnya client maupun router sudah bisa koneksi ke internet. Kita bisa melakukan traceroute atau test ping untuk pengecekan. Nah, demikianlah langkah-langkah bagaimana cara konfigurasi dasar dari BGP. Anda bisa sesuaikan alokasi ip addressing sesuai dengan kondisi real pada jaringan Anda.
